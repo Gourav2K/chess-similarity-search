@@ -1,0 +1,6 @@
+kafka:
+  bootstrap_servers: 'localhost:9092'
+  client_id: 'chess-position-processor'
+  acks: 'all'
+  auto_offset_reset: 'earliest'
+  topic : 'chess_positions'

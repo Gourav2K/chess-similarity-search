@@ -1,0 +1,69 @@
+enum Color {
+  WHITE
+  BLACK
+}
+
+enum PieceType {
+  PAWN
+  KNIGHT
+  BISHOP
+  ROOK
+  QUEEN
+  KING
+}
+
+input SimilarityRequestInput {
+  color: Color!
+  selectedPieces: [PieceType!]!
+  limit: Int
+}
+
+type Position {
+  id: ID
+  fen: String
+  whiteKing: Int
+  blackKing: Int
+  whiteQueens: String
+  whiteRooks: String
+  whiteBishops: String
+  whiteKnights: String
+  blackQueens: String
+  blackRooks: String
+  blackBishops: String
+  blackKnights: String
+  whitePawns: Float
+  blackPawns: Float
+  moveNumber: Int
+  sideToMove: String
+  castlingRights: Int
+  enPassantSquare: Int
+  fullMoveNumber: Int
+}
+
+type Game {
+  id: ID
+  whiteName: String
+  blackName: String
+  whiteElo: Int
+  blackElo: Int
+  result: String
+  eco: String
+  gameType: String
+  date: String
+  timeControl: String
+  opening: String
+  site: String
+}
+
+type SimilarityResult {
+  positionId: ID
+  gameId: ID
+  moveNumber: Int
+  similarityScore: Float
+  position: Position
+  game: Game
+}
+
+type Query {
+  findSimilarPositionsByFen(fen: String!, request: SimilarityRequestInput!): [SimilarityResult!]!
+}
