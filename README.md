@@ -93,9 +93,9 @@ cd chess-similarity-search
 There are two ways to set up the PostgreSQL database with chess positions:
 #### Option 1: Parse Your Own PGN File
 
-i. Download any `.pgn.zst` file from [https://database.lichess.org](https://database.lichess.org)
-ii. Extract it and place it inside the `data/` directory
-iii. Run the preprocessor like this:
+1. Download any `.pgn.zst` file from [https://database.lichess.org](https://database.lichess.org)
+2. Extract it and place it inside the `data/` directory
+3. Run the preprocessor like this:
 
 ```bash
 docker-compose run -v $(pwd)/data:/data preprocessor /data/{your_file.pgn} --max-games 2500000
@@ -104,9 +104,9 @@ docker-compose run -v $(pwd)/data:/data preprocessor /data/{your_file.pgn} --max
 
 #### Option 2: Use Preloaded SQL Dump (Recommended for Demo)
 
-i. Download the .sql file I’ve shared : [Database Dump Link](https://tinyurl.com/2amdv3kd)
-ii. Place the file inside the db-init/ directory
-iii. Proceed to the next step (docker-compose up --build)
+1. Download the .sql file I’ve shared : [Database Dump Link](https://tinyurl.com/2amdv3kd)
+2. Place the file inside the db-init/ directory
+3. Proceed to the next step (docker-compose up --build)
 
 The application will auto-load 200K+ positions and be immediately ready to query!
 
@@ -168,16 +168,6 @@ docker-compose run -v $(pwd)/data:/data preprocessor /data/lichess_file.pgn --ma
 - Publishes parsed games+positions data to Kafka
 
 ---
-
-## 🛠 Local Dev (Optional)
-
-| Component     | How to Run                         |
-|---------------|-------------------------------------|
-| Backend       | `./gradlew bootRun` in `chess-app/` |
-| Frontend      | `npm run dev` in `chess-app-frontend/` |
-| Preprocessor  | `python main.py file.pgn` in `pre-processor/` |
-
----
 ## 🧪 Local Setup (Non-Docker)
 
 If you prefer to run the project locally without Docker (for development or debugging), follow these steps:
@@ -232,11 +222,6 @@ VITE_WEBFLUX_BACKEND_URL=http://localhost:8080
 ### ✅ You're good to go!
 - Visit frontend at: [http://localhost:5173](http://localhost:5173)
 - Access GraphQL: [http://localhost:8080/graphql](http://localhost:8080/graphql)
-
----
-## 📜 License
-
-MIT License
 
 ---
 
