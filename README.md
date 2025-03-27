@@ -110,7 +110,7 @@ docker-compose run -v $(pwd)/data:/data preprocessor /data/{your_file.pgn} --max
 
 #### Option 2: Use Preloaded SQL Dump (Recommended for Demo)
 
-1. Download the .sql file I’ve shared : [Database Dump Link](https://tinyurl.com/2amdv3kd)
+1. Download the .sql file I’ve shared : [Database Dump Link](https://www.dropbox.com/scl/fi/0fl6p9bxa9vhwrdlz049c/chess_app_db.sql?rlkey=b734r6mk32v2xt7mn4swpajlj&st=wm70imcx&dl=0)
 2. Place the file inside the db-init/ directory
 3. Proceed to the next step (docker-compose up --build)
 
@@ -121,6 +121,7 @@ The application will auto-load 200K+ positions and be immediately ready to query
 ```bash
 docker-compose up --build
 ```
+> Note: The postgres container might take some time to import the dump as its big - so if the backend container stops, rerun it once you see that the postgres container is ready to accept connections.
 
 4. Access the app:
 - Frontend: [http://localhost:3000](http://localhost:3000)

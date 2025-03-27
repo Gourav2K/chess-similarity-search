@@ -12,7 +12,8 @@ public class CorsGlobalConfig {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:5173"); // frontend
+        config.addAllowedOrigin("http://localhost:5173"); // frontend in local
+        config.addAllowedOrigin("http://localhost:3000"); // frontend in docker
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         config.setAllowCredentials(true); // optional if using cookies/auth
