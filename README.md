@@ -1,5 +1,8 @@
 # ♟️ Chess Similarity Search Engine
 
+> ✨ A visual demo of the application running locally — showcasing PGN ingestion, similarity search, and UI response.
+[Demo Video](./resources/videos/Demo_Video.mp4)
+
 A full-stack, containerized application (built in a way that it can be easily scaled as well) to explore and analyze chess positions based on structural similarity — built to help players discover recurring human ideas rather than rely solely on engine precision.
 
 Yes, engines exist — and yes, they can tell us the best move in any given position. But anyone who has passionately played chess knows that while the opening phase is often well-studied, the middlegame can feel like a wilderness. Players may be familiar with the first 10–15 moves of an opening, but once theory ends, they’re often left improvising.
@@ -39,7 +42,7 @@ The core idea here is to make the ***middlegame*** more studyable. Human brains 
 
 This project follows a modular, event-driven design pattern that makes it easy to scale each component independently. Here's a high-level overview of how it works:
 
-![Architecture Diagram](./images/architecture_diagram.png)
+![Architecture Diagram](./resources/images/architecture_diagram.png)
 
 - **PGN Preprocessor (Python):** Reads PGN files, extracts FEN positions, and publishes structured data in batches via Kafka. Uses Redis to track progress of how many games have been read from the PGN file so that subsequent runs can continue processing from the next game in the PGN file.
 - **Backend Application (Spring WebFlux):** Acts as the core search engine. It consumes game data from Kafka, stores positions and games in PostgreSQL, and handles incoming GraphQL queries. It includes the logic to perform structure-based similarity search by filtering and ranking positions from the database based on provided criteria (like pawns, pieces, and color). 
@@ -234,3 +237,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 - Built using open PGN data from [Lichess](https://database.lichess.org/)
 - Designed & engineered by [@gourav2k](https://github.com/gourav2k)
+- Big thanks to [@vishiivivek](https://github.com/vishiivivek) for helping with the ideation and his invaluable inputs
