@@ -224,6 +224,10 @@ VITE_WEBFLUX_BACKEND_URL=http://localhost:8080
 - Access GraphQL: [http://localhost:8080/graphql](http://localhost:8080/graphql)
 
 ---
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE).
+---
 
 ## 🙌 Credits
 
