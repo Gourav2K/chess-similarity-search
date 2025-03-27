@@ -2,7 +2,9 @@
 
 > ✨ A visual demo of the application running locally — showcasing PGN ingestion, similarity search, and UI response.
 
-![Demo Video](./resources/videos/demo_video.gif)
+<div align="center">
+  <img src="./resources/videos/demo_video.gif" alt="Demo Video" style="max-width: 100%; width: 800px;" />
+</div>
 
 A full-stack, containerized application (built in a way that it can be easily scaled as well) to explore and analyze chess positions based on structural similarity — built to help players discover recurring human ideas rather than rely solely on engine precision.
 
