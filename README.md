@@ -1,7 +1,7 @@
 # ♟️ Chess Similarity Search Engine
 
 > ✨ A visual demo of the application running locally — showcasing PGN ingestion, similarity search, and UI response.
-[Demo Video](./resources/videos/demo_video.gif)
+![Demo Video](./resources/videos/demo_video.gif)
 
 A full-stack, containerized application (built in a way that it can be easily scaled as well) to explore and analyze chess positions based on structural similarity — built to help players discover recurring human ideas rather than rely solely on engine precision.
 
