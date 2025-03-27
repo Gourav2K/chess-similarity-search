@@ -1,6 +1,6 @@
 # ♟️ Chess Similarity Search Engine
 
-> ✨ A visual demo of the application running locally — showcasing PGN ingestion, similarity search, and UI response.
+> ✨ A visual demo of the application running locally — 
 
 <div align="center">
   <img src="./resources/videos/demo_video.gif" alt="Demo Video" style="max-width: 100%; width: 800px;" />
