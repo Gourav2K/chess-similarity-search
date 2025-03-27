@@ -227,6 +227,7 @@ VITE_WEBFLUX_BACKEND_URL=http://localhost:8080
 ## 📜 License
 
 This project is licensed under the [MIT License](LICENSE).
+
 ---
 
 ## 🙌 Credits
