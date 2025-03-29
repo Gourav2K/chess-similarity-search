@@ -44,7 +44,7 @@ public class PositionMatchingService {
         // FROM and WHERE clause
         query.append(" FROM positions p WHERE 1=1 ");
 
-        // Optionally filter by matching piece presence (bitwise for pawns, LIKE or equality for others)
+        // filter by matching piece presence
         addSearchFilters(query, position, request);
 
         // ORDER BY score
@@ -83,7 +83,7 @@ public class PositionMatchingService {
                 case "whiteKing" -> scoreParts.add(equalityScore("white_king", position.getWhiteKing()));
                 case "blackKing" -> scoreParts.add(equalityScore("black_king", position.getBlackKing()));
                 // Could use setRegexOverlapScore or setOverlapScore
-                default -> scoreParts.add(setRegexOverlapScore(pieceTypeToColumn(pieceType), getPieceValue(position, pieceType)));
+                default -> scoreParts.add(arrayOverlapScore(pieceTypeToColumn(pieceType), pieceType));
             }
         }
 
@@ -109,11 +109,63 @@ public class PositionMatchingService {
         }
     }
 
-    private DatabaseClient.GenericExecuteSpec bindFilterValues(DatabaseClient.GenericExecuteSpec spec, Position position, SimilarityRequest request) {
+    private DatabaseClient.GenericExecuteSpec bindFilterValues(
+            DatabaseClient.GenericExecuteSpec spec,
+            Position position,
+            SimilarityRequest request
+    ) {
         for (String pieceType : request.getPieceTypes()) {
             switch (pieceType) {
-                case "whitePawn" -> spec = spec.bind("whitePawns", position.getWhitePawns());
-                case "blackPawn" -> spec = spec.bind("blackPawns", position.getBlackPawns());
+                case "whitePawn" -> {
+                    if (position.getWhitePawns() != null) {
+                        spec = spec.bind("whitePawns", position.getWhitePawns());
+                    }
+                }
+                case "blackPawn" -> {
+                    if (position.getBlackPawns() != null) {
+                        spec = spec.bind("blackPawns", position.getBlackPawns());
+                    }
+                }
+                case "whiteQueen" -> {
+                    if (position.getWhiteQueens() != null && !position.getWhiteQueens().isEmpty()) {
+                        spec = spec.bind("whiteQueen", position.getWhiteQueens().toArray(new Integer[0]));
+                    }
+                }
+                case "whiteRook" -> {
+                    if (position.getWhiteRooks() != null && !position.getWhiteRooks().isEmpty()) {
+                        spec = spec.bind("whiteRook", position.getWhiteRooks().toArray(new Integer[0]));
+                    }
+                }
+                case "whiteBishop" -> {
+                    if (position.getWhiteBishops() != null && !position.getWhiteBishops().isEmpty()) {
+                        spec = spec.bind("whiteBishop", position.getWhiteBishops().toArray(new Integer[0]));
+                    }
+                }
+                case "whiteKnight" -> {
+                    if (position.getWhiteKnights() != null && !position.getWhiteKnights().isEmpty()) {
+                        spec = spec.bind("whiteKnight", position.getWhiteKnights().toArray(new Integer[0]));
+                    }
+                }
+                case "blackQueen" -> {
+                    if (position.getBlackQueens() != null && !position.getBlackQueens().isEmpty()) {
+                        spec = spec.bind("blackQueen", position.getBlackQueens().toArray(new Integer[0]));
+                    }
+                }
+                case "blackRook" -> {
+                    if (position.getBlackRooks() != null && !position.getBlackRooks().isEmpty()) {
+                        spec = spec.bind("blackRook", position.getBlackRooks().toArray(new Integer[0]));
+                    }
+                }
+                case "blackBishop" -> {
+                    if (position.getBlackBishops() != null && !position.getBlackBishops().isEmpty()) {
+                        spec = spec.bind("blackBishop", position.getBlackBishops().toArray(new Integer[0]));
+                    }
+                }
+                case "blackKnight" -> {
+                    if (position.getBlackKnights() != null && !position.getBlackKnights().isEmpty()) {
+                        spec = spec.bind("blackKnight", position.getBlackKnights().toArray(new Integer[0]));
+                    }
+                }
             }
         }
         return spec;
@@ -146,7 +198,7 @@ public class PositionMatchingService {
         };
     }
 
-    private String getPieceValue(Position position, String pieceType) {
+    private List<Integer> getPieceValue(Position position, String pieceType) {
         return switch (pieceType) {
             case "whiteQueen" -> position.getWhiteQueens();
             case "whiteRook" -> position.getWhiteRooks();
@@ -156,7 +208,7 @@ public class PositionMatchingService {
             case "blackRook" -> position.getBlackRooks();
             case "blackBishop" -> position.getBlackBishops();
             case "blackKnight" -> position.getBlackKnights();
-            default -> "";
+            default -> List.of();
         };
     }
 
@@ -208,5 +260,19 @@ public class PositionMatchingService {
                 .toList();
 
         return String.format("(%s)::numeric / %d", String.join(" + ", caseStatements), count);
+    }
+
+    private String arrayOverlapScore(String column, String bindParamName) {
+        return String.format("""
+        (
+            SELECT CARDINALITY(
+                ARRAY(
+                    SELECT UNNEST(p.%s) 
+                    INTERSECT 
+                    SELECT UNNEST(:%s)
+                )
+            )::float / GREATEST(CARDINALITY(:%s), 1)
+        )
+        """, column, bindParamName, bindParamName);
     }
 }

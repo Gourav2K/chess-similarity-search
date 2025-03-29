@@ -99,6 +99,7 @@ public class KafkaListenerService {
                 .timeControl(metadata.getTimeControl())
                 .opening(metadata.getOpening())
                 .site(metadata.getSite())
+                .pgn(metadata.getPgn())
                 .build();
     }
 

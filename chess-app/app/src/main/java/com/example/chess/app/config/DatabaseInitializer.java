@@ -58,7 +58,8 @@ public class DatabaseInitializer {
                 eco VARCHAR(10),
                 time_control VARCHAR(50),
                 site VARCHAR(255),
-                opening VARCHAR(255)
+                opening VARCHAR(255),
+                pgn VARCHAR(670)
             )
             """)
                 .then();
@@ -72,14 +73,14 @@ public class DatabaseInitializer {
                 move_number INTEGER,
                 white_king INTEGER,
                 black_king INTEGER,
-                white_queens VARCHAR(100),
-                white_rooks VARCHAR(100),
-                white_bishops VARCHAR(100),
-                white_knights VARCHAR(100),
-                black_queens VARCHAR(100),
-                black_rooks VARCHAR(100),
-                black_bishops VARCHAR(100),
-                black_knights VARCHAR(100),
+                white_queens INTEGER[],
+                white_rooks INTEGER[],
+                white_bishops INTEGER[],
+                white_knights INTEGER[],
+                black_queens INTEGER[],
+                black_rooks INTEGER[],
+                black_bishops INTEGER[],
+                black_knights INTEGER[],
                 white_pawns BIGINT,
                 black_pawns BIGINT,
                 side_to_move VARCHAR(1),
@@ -93,18 +94,20 @@ public class DatabaseInitializer {
                 .then();
     }
 
-    // Optional: Create helpful indexes for position searches
     private Mono<Void> createIndexes() {
         return databaseClient.sql("""
-            CREATE INDEX IF NOT EXISTS idx_white_pawns ON positions(white_pawns);
-            CREATE INDEX IF NOT EXISTS idx_black_pawns ON positions(black_pawns);
-            CREATE INDEX IF NOT EXISTS idx_white_bishops ON positions(white_bishops);
-            CREATE INDEX IF NOT EXISTS idx_black_bishops ON positions(black_bishops);
-            CREATE INDEX IF NOT EXISTS idx_white_rooks ON positions(white_rooks);
-            CREATE INDEX IF NOT EXISTS idx_black_rooks ON positions(black_rooks);
-            CREATE INDEX IF NOT EXISTS idx_white_knights ON positions(white_knights);
-            CREATE INDEX IF NOT EXISTS idx_black_knights ON positions(black_knights);
-            """)
-                .then();
+        CREATE INDEX IF NOT EXISTS gin_white_queens ON positions USING GIN (white_queens);
+        CREATE INDEX IF NOT EXISTS gin_white_rooks ON positions USING GIN (white_rooks);
+        CREATE INDEX IF NOT EXISTS gin_white_bishops ON positions USING GIN (white_bishops);
+        CREATE INDEX IF NOT EXISTS gin_white_knights ON positions USING GIN (white_knights);
+
+        CREATE INDEX IF NOT EXISTS gin_black_queens ON positions USING GIN (black_queens);
+        CREATE INDEX IF NOT EXISTS gin_black_rooks ON positions USING GIN (black_rooks);
+        CREATE INDEX IF NOT EXISTS gin_black_bishops ON positions USING GIN (black_bishops);
+        CREATE INDEX IF NOT EXISTS gin_black_knights ON positions USING GIN (black_knights);
+
+        CREATE INDEX IF NOT EXISTS idx_white_pawns ON positions(white_pawns);
+        CREATE INDEX IF NOT EXISTS idx_black_pawns ON positions(black_pawns);
+    """).then();
     }
 }

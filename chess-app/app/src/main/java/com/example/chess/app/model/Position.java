@@ -9,6 +9,7 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -26,16 +27,16 @@ public class Position implements Persistable<UUID> {
     private Integer whiteKing;
     private Integer blackKing;
 
-    // Multi-piece locations as comma-separated square indices
-    private String whiteQueens;
-    private String whiteRooks;
-    private String whiteBishops;
-    private String whiteKnights;
+    // Multi-piece locations as arrays
+    private List<Integer> whiteQueens;
+    private List<Integer> whiteRooks;
+    private List<Integer> whiteBishops;
+    private List<Integer> whiteKnights;
 
-    private String blackQueens;
-    private String blackRooks;
-    private String blackBishops;
-    private String blackKnights;
+    private List<Integer> blackQueens;
+    private List<Integer> blackRooks;
+    private List<Integer> blackBishops;
+    private List<Integer> blackKnights;
 
     // Bitboards for pawns
     private Long whitePawns;

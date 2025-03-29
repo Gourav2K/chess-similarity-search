@@ -16,4 +16,5 @@ public class GameMetadataDTO {
     private String timeControl;
     private String opening;
     private String site;
+    private String pgn;
 }
