@@ -18,12 +18,15 @@ The core idea here is to make the ***middlegame*** more studyable. Human brains 
 
 ## 🚀 Features
 
-- 🔎 **GraphQL-based similarity search** for chess positions
 - 📦 **Python preprocessor** to parse PGN files and publish to Kafka
 - 🧠 **Reactive Spring Webflux backend** with Kafka consumer, PostgreSQL persistence and querying logic
-- 💡 **Bitboard and string-based matching logic** for position similarity
+- 💡 **Array, bitboard, and integer-based matching logic with GIN-accelerated SQL queries** for position similarity
+- 🔎 **GraphQL-based resolver** for similarity search application for chess positions
 - 🖥️ **React + Vite frontend** to input FENs or create position on chess board and visualize results
-- 🐳 Fully containerized using Docker and Docker Compose
+- 🐳 **Fully containerized using Docker and Docker Compose**
+- 🎯 **Elo-aware filtering** to show relevant human games within a target rating range
+- 🔄 **Deduplication** ensures no repeated games show up in results
+
 
 ---
 
@@ -48,7 +51,7 @@ This project follows a modular, event-driven design pattern that makes it easy t
 ![Architecture Diagram](./resources/images/architecture_diagram.png)
 
 - **PGN Preprocessor (Python):** Reads PGN files, extracts FEN positions, and publishes structured data in batches via Kafka. Uses Redis to track progress of how many games have been read from the PGN file so that subsequent runs can continue processing from the next game in the PGN file.
-- **Backend Application (Spring WebFlux):** Acts as the core search engine. It consumes game data from Kafka, stores positions and games in PostgreSQL, and handles incoming GraphQL queries. It includes the logic to perform structure-based similarity search by filtering and ranking positions from the database based on provided criteria (like pawns, pieces, and color). 
+- **Backend Application (Spring WebFlux):** Acts as the core search engine. It consumes game data from Kafka, stores positions and games in PostgreSQL, and handles incoming GraphQL queries. It includes the logicto perform structure-based similarity search using array + bitboard + integer matching logic, pre-filtering positions with PostgreSQL GIN indexes, scoring via dynamic SQL expressions, and ranking top results efficiently in-memory with deduplication based on provided criteria (like pawns, pieces, and color). 
 - **Frontend Application (React + Vite):** Provides a user-friendly interface to input FEN strings or use a chessboard to search for similar positions based on structural features. Each position output also has a direct link to the game played on Lichess which can be used for further evaluation.
 
 ---
@@ -59,7 +62,8 @@ This project is designed with scalability in mind, making it ideal for future gr
 
 - **Kafka-based ingestion** decouples parsing from storage, enabling horizontal scaling of consumers and producers
 - **Stateless backend (Spring WebFlux)** handles concurrent GraphQL queries efficiently and is ready for Kubernetes, load balancers, etc.
-- **PostgreSQL schema with bitboard optimizations** ensures fast lookups and indexing for high-performance queries
+- **PostgreSQL schema with bitboard optimizations** ensures fast lookups and indexing for pawn-search based queries
+- **CTE-based prefiltering + bitboard & array GIN indexing** reduces full-table scans for similarity queries
 - **Redis-backed preprocessor batching** allows checkpointing and distributed ingestion
 - **Frontend is built on Vite/React**, making it lightweight and easy to deploy on any static CDN or edge server
 
@@ -110,7 +114,7 @@ docker-compose run -v $(pwd)/data:/data preprocessor /data/{your_file.pgn} --max
 
 #### Option 2: Use Preloaded SQL Dump (Recommended for Demo)
 
-1. Download the .sql file I’ve shared : [Database Dump Link](https://www.dropbox.com/scl/fi/0fl6p9bxa9vhwrdlz049c/chess_app_db.sql?rlkey=b734r6mk32v2xt7mn4swpajlj&st=wm70imcx&dl=0)
+1. Download the .sql file I’ve shared : [Database Dump Link](https://www.dropbox.com/scl/fi/24uqbh2pow3pz22gff53z/chess_app_db.sql?rlkey=aftaj862o7oaztney9d031ijn&st=zav3530q&dl=0) - contains 250K games + ~3M positions data.
 2. Place the file inside the db-init/ directory
 3. Proceed to the next step (docker-compose up --build)
 
@@ -159,7 +163,9 @@ query FindSimilarPositionsByFen($fen: String!, $request: SimilarityRequestInput!
   "request": {
     "color": "WHITE",
     "selectedPieces": ["PAWN", "BISHOP"],
-    "limit": 10
+    "limit": 10,
+    "minElo": 1600,
+    "maxElo": 2000
   }
 }
 ```
@@ -229,6 +235,14 @@ VITE_WEBFLUX_BACKEND_URL=http://localhost:8080
 ### ✅ You're good to go!
 - Visit frontend at: [http://localhost:5173](http://localhost:5173)
 - Access GraphQL: [http://localhost:8080/graphql](http://localhost:8080/graphql)
+---
+## 🧭 What's Next?
+
+- Performance Optimizations - Database side, application side.
+- Clustering : KNN Embedding + Vector DB integration to enhance the performance of fetching subset of similar positions via cosine similarity between board embeddings. A faster subset fetch could drastically improve the CTE prefiltering step.
+- Preprocessor logic could potentially be converted into scheduled jobs reading pgn files and pushing batches of games to kafka at fixed schedules
+- LLM-powered game summaries and pattern insights for each similar position - based on the output; another service within this architecture.
+- PGNs from Lichess website are very big and compressed - a service which could automate the process of fetching the PGN file from Lichess and become an input for the preprocessor jobs
 
 ---
 ## 📜 License
