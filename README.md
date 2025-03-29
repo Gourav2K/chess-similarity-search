@@ -238,11 +238,11 @@ VITE_WEBFLUX_BACKEND_URL=http://localhost:8080
 ---
 ## 🧭 What's Next?
 
-- Performance Optimizations - Database side, application side.
-- Clustering : KNN Embedding + Vector DB integration to enhance the performance of fetching subset of similar positions via cosine similarity between board embeddings. A faster subset fetch could drastically improve the CTE prefiltering step.
-- Preprocessor logic could potentially be converted into scheduled jobs reading pgn files and pushing batches of games to kafka at fixed schedules
-- LLM-powered game summaries and pattern insights for each similar position - based on the output; another service within this architecture.
-- PGNs from Lichess website are very big and compressed - a service which could automate the process of fetching the PGN file from Lichess and become an input for the preprocessor jobs
+- **Performance Optimizations** - Database side, application side.
+- **Clustering : KNN Embedding + Vector DB integration** to enhance the performance of fetching subset of similar positions via cosine similarity between board embeddings. A faster subset fetch could drastically improve the CTE prefiltering step.
+- **CRON Jobs** - Preprocessor logic could potentially be converted into **scheduled jobs** reading pgn files and pushing batches of games to kafka at fixed schedules
+- **LLM-powered game summaries and pattern insights for each similar position** - based on the output; another service within this architecture.
+- PGNs from Lichess website are very big and compressed - a service which could automate the process of fetching, decompressing the PGN file from Lichess and become an input for the preprocessor jobs
 
 ---
 ## 📜 License
