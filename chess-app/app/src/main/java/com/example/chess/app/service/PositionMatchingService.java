@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -28,39 +25,18 @@ public class PositionMatchingService {
         this.template = template;
     }
 
-    /**
-     * Find similar positions based on the requested pieces and filters
-     */
     public Flux<SimilarityResult> findSimilarPositions(Position position, SimilarityRequest request) {
-        StringBuilder query = new StringBuilder();
+        List<String> filters = buildPrefilterConditions(position, request);
+        List<String> scores = buildSimilarityScoreClauses(position, request);
 
-        // Start SELECT clause
-        query.append("""
-        SELECT p.id AS position_id, p.game_id, p.move_number""");
+        String sql = assembleSimilaritySQL(filters, scores);
 
-        // Build similarity score dynamically based on pieceTypes
-        buildSimilarityScoreClause(query, position, request);
-
-        // FROM and WHERE clause
-        query.append(" FROM positions p WHERE 1=1 ");
-
-        // Optionally filter by matching piece presence (bitwise for pawns, LIKE or equality for others)
-        addSearchFilters(query, position, request);
-
-        // ORDER BY score
-        query.append(" ORDER BY similarity_score DESC LIMIT :limit ");
-
-        // Prepare query
-        DatabaseClient.GenericExecuteSpec spec = template.getDatabaseClient()
-                .sql(query.toString());
-
-        // Bind parameters
-        spec = spec.bind("limit", request.getLimit());
-
-        // Bind piece-specific values (like whitePawns, etc.)
+        DatabaseClient.GenericExecuteSpec spec = template.getDatabaseClient().sql(sql);
         spec = bindFilterValues(spec, position, request);
+        spec = spec.bind("minElo", request.getMinElo());
+        spec = spec.bind("maxElo", request.getMaxElo());
+        spec = spec.bind("limit", request.getLimit()*10);
 
-        // Execute and fetch
         return spec.map((row, metadata) -> {
                     SimilarityResult result = new SimilarityResult();
                     result.setPositionId(row.get("position_id", UUID.class));
@@ -70,66 +46,175 @@ public class PositionMatchingService {
                     return result;
                 })
                 .all()
-                .concatMap(result -> enrichWithPositionAndGame(result));
+                .collectList()
+                .flatMapMany(results -> {
+                    Set<String> seenGames = new HashSet<>();
+                    List<SimilarityResult> uniqueResults = new ArrayList<>();
+
+                    for (SimilarityResult result : results) {
+                        if (seenGames.add(result.getGameId())) {
+                            uniqueResults.add(result);
+                        }
+                        if (uniqueResults.size() >= request.getLimit()) break;
+                    }
+
+                    return Flux.fromIterable(uniqueResults);
+                })
+                .concatMap(this::enrichWithPositionAndGame);
     }
 
-    private void buildSimilarityScoreClause(StringBuilder query, Position position, SimilarityRequest request) {
-        List<String> scoreParts = new ArrayList<>();
-
+    private List<String> buildPrefilterConditions(Position position,SimilarityRequest request) {
+        List<String> filters = new ArrayList<>();
+        filters.add("g.white_elo BETWEEN :minElo AND :maxElo");
+        filters.add("g.black_elo BETWEEN :minElo AND :maxElo");
         for (String pieceType : request.getPieceTypes()) {
             switch (pieceType) {
-                case "whitePawn" -> scoreParts.add(similarityForBitboard("white_pawns", position.getWhitePawns()));
-                case "blackPawn" -> scoreParts.add(similarityForBitboard("black_pawns", position.getBlackPawns()));
-                case "whiteKing" -> scoreParts.add(equalityScore("white_king", position.getWhiteKing()));
-                case "blackKing" -> scoreParts.add(equalityScore("black_king", position.getBlackKing()));
-                // Could use setRegexOverlapScore or setOverlapScore
-                default -> scoreParts.add(setRegexOverlapScore(pieceTypeToColumn(pieceType), getPieceValue(position, pieceType)));
-            }
-        }
-
-        query.append(", (")
-                .append(String.join(" + ", scoreParts.isEmpty() ? List.of("0.0") : scoreParts))
-                .append(") / ")
-                .append(scoreParts.size() > 0 ? scoreParts.size() : 1)
-                .append(" AS similarity_score");
-    }
-
-    private void addSearchFilters(StringBuilder query, Position position, SimilarityRequest request) {
-        for (String pieceType : request.getPieceTypes()) {
-            switch (pieceType) {
-                case "whitePawn" -> query.append(" AND (p.white_pawns & :whitePawns) > 0 ");
-                case "blackPawn" -> query.append(" AND (p.black_pawns & :blackPawns) > 0 ");
+                case "whitePawn" -> filters.add("white_pawns & :whitePawns > 0");
+                case "blackPawn" -> filters.add("black_pawns & :blackPawns > 0");
+                case "whiteKing" -> {
+                    if (position.getWhiteKing() != null)
+                        filters.add("white_king = :whiteKing");
+                }
+                case "blackKing" -> {
+                    if (position.getBlackKing() != null)
+                        filters.add("black_king = :blackKing");
+                }
                 default -> {
-                    String col = pieceTypeToColumn(pieceType);
-                    if (getPieceValue(position, pieceType) != null && !getPieceValue(position, pieceType).isEmpty()) {
-                        query.append(" AND p.").append(col).append(" IS NOT NULL ");
+                    List<Integer> squares = getPieceValue(position, pieceType);
+                    if (squares != null && !squares.isEmpty()) {
+                        filters.add(pieceTypeToColumn(pieceType) + " && :" + pieceType);
                     }
                 }
             }
         }
+        return filters;
+    }
+
+    private List<String> buildSimilarityScoreClauses(Position position, SimilarityRequest request) {
+        List<String> scores = new ArrayList<>();
+        for (String pieceType : request.getPieceTypes()) {
+            switch (pieceType) {
+                case "whitePawn" -> scores.add(similarityForBitboard("white_pawns", position.getWhitePawns()));
+                case "blackPawn" -> scores.add(similarityForBitboard("black_pawns", position.getBlackPawns()));
+                case "whiteKing" -> {
+                    if (position.getWhiteKing() != null)
+                        scores.add(equalityScore("white_king", position.getWhiteKing()));
+                }
+                case "blackKing" -> {
+                    if (position.getBlackKing() != null)
+                        scores.add(equalityScore("black_king", position.getBlackKing()));
+                }
+                default -> {
+                    List<Integer> squares = getPieceValue(position, pieceType);
+                    if (squares != null && !squares.isEmpty()) {
+                        scores.add(arrayOverlapScore(pieceTypeToColumn(pieceType), pieceType));
+                    }
+                }
+            }
+        }
+        return scores;
+    }
+
+    private String assembleSimilaritySQL(List<String> filters, List<String> scores) {
+        String filterClause = String.join(" AND ", filters);
+
+        if (scores.isEmpty()) {
+            return String.format("""
+            WITH filtered_positions AS (
+                SELECT p.id
+                FROM positions p
+                JOIN games g ON g.id = p.game_id
+                WHERE %s
+                LIMIT 50000
+            )
+            SELECT 
+                p.id AS position_id,
+                p.game_id,
+                p.move_number,
+                0.0 AS similarity_score
+            FROM positions p
+            JOIN filtered_positions f ON p.id = f.id
+            ORDER BY similarity_score DESC
+            LIMIT :limit
+        """, filterClause);
+        }
+
+        String scoreClause = "(" + String.join(" + ", scores) + ") / " + scores.size();
+
+        return String.format("""
+        WITH filtered_positions AS (
+            SELECT p.id
+            FROM positions p
+            JOIN games g ON g.id = p.game_id
+            WHERE %s
+            LIMIT 50000
+        )
+        SELECT 
+            p.id AS position_id,
+            p.game_id,
+            p.move_number,
+            %s AS similarity_score
+        FROM positions p
+        JOIN filtered_positions f ON p.id = f.id
+        ORDER BY similarity_score DESC
+        LIMIT :limit
+    """, filterClause, scoreClause);
     }
 
     private DatabaseClient.GenericExecuteSpec bindFilterValues(DatabaseClient.GenericExecuteSpec spec, Position position, SimilarityRequest request) {
         for (String pieceType : request.getPieceTypes()) {
             switch (pieceType) {
-                case "whitePawn" -> spec = spec.bind("whitePawns", position.getWhitePawns());
-                case "blackPawn" -> spec = spec.bind("blackPawns", position.getBlackPawns());
+                case "whitePawn" -> {
+                    if (position.getWhitePawns() != null)
+                        spec = spec.bind("whitePawns", position.getWhitePawns());
+                }
+                case "blackPawn" -> {
+                    if (position.getBlackPawns() != null)
+                        spec = spec.bind("blackPawns", position.getBlackPawns());
+                }
+                case "whiteKing" -> {
+                    if (position.getWhiteKing() != null)
+                        spec = spec.bind("whiteKing", position.getWhiteKing());
+                }
+                case "blackKing" -> {
+                    if (position.getBlackKing() != null)
+                        spec = spec.bind("blackKing", position.getBlackKing());
+                }
+                case "whiteQueen" -> {
+                    if (position.getWhiteQueens() != null && !position.getWhiteQueens().isEmpty())
+                        spec = spec.bind("whiteQueen", position.getWhiteQueens().toArray(new Integer[0]));
+                }
+                case "whiteRook" -> {
+                    if (position.getWhiteRooks() != null && !position.getWhiteRooks().isEmpty())
+                        spec = spec.bind("whiteRook", position.getWhiteRooks().toArray(new Integer[0]));
+                }
+                case "whiteBishop" -> {
+                    if (position.getWhiteBishops() != null && !position.getWhiteBishops().isEmpty())
+                        spec = spec.bind("whiteBishop", position.getWhiteBishops().toArray(new Integer[0]));
+                }
+                case "whiteKnight" -> {
+                    if (position.getWhiteKnights() != null && !position.getWhiteKnights().isEmpty())
+                        spec = spec.bind("whiteKnight", position.getWhiteKnights().toArray(new Integer[0]));
+                }
+                case "blackQueen" -> {
+                    if (position.getBlackQueens() != null && !position.getBlackQueens().isEmpty())
+                        spec = spec.bind("blackQueen", position.getBlackQueens().toArray(new Integer[0]));
+                }
+                case "blackRook" -> {
+                    if (position.getBlackRooks() != null && !position.getBlackRooks().isEmpty())
+                        spec = spec.bind("blackRook", position.getBlackRooks().toArray(new Integer[0]));
+                }
+                case "blackBishop" -> {
+                    if (position.getBlackBishops() != null && !position.getBlackBishops().isEmpty())
+                        spec = spec.bind("blackBishop", position.getBlackBishops().toArray(new Integer[0]));
+                }
+                case "blackKnight" -> {
+                    if (position.getBlackKnights() != null && !position.getBlackKnights().isEmpty())
+                        spec = spec.bind("blackKnight", position.getBlackKnights().toArray(new Integer[0]));
+                }
             }
         }
         return spec;
-    }
-
-    private Mono<SimilarityResult> enrichWithPositionAndGame(SimilarityResult result) {
-        return template.select(Position.class)
-                .matching(query(where("id").is(result.getPositionId())))
-                .one()
-                .doOnNext(result::setPosition)
-                .then(template.select(Game.class)
-                        .matching(query(where("id").is(result.getGameId())))
-                        .one()
-                        .doOnNext(result::setGame)
-                )
-                .thenReturn(result);
     }
 
     private String pieceTypeToColumn(String pieceType) {
@@ -142,21 +227,7 @@ public class PositionMatchingService {
             case "blackRook" -> "black_rooks";
             case "blackBishop" -> "black_bishops";
             case "blackKnight" -> "black_knights";
-            default -> "";
-        };
-    }
-
-    private String getPieceValue(Position position, String pieceType) {
-        return switch (pieceType) {
-            case "whiteQueen" -> position.getWhiteQueens();
-            case "whiteRook" -> position.getWhiteRooks();
-            case "whiteBishop" -> position.getWhiteBishops();
-            case "whiteKnight" -> position.getWhiteKnights();
-            case "blackQueen" -> position.getBlackQueens();
-            case "blackRook" -> position.getBlackRooks();
-            case "blackBishop" -> position.getBlackBishops();
-            case "blackKnight" -> position.getBlackKnights();
-            default -> "";
+            default -> throw new IllegalArgumentException("Unknown piece type: " + pieceType);
         };
     }
 
@@ -171,42 +242,43 @@ public class PositionMatchingService {
         return String.format("CASE WHEN %s = %d THEN 1.0 ELSE 0.0 END", column, value);
     }
 
-    private String setOverlapScore(String column, String valuesCsv) {
-        if (valuesCsv == null || valuesCsv.isBlank()) {
-            return "0.0";
-        }
-
-        // Convert "1,8" → ['1', '8']
-        String[] squares = valuesCsv.split(",");
-        int countA = squares.length;
-        String listOfValues = Arrays.stream(squares)
-                .map(s -> "'" + s.trim() + "'")
-                .collect(Collectors.joining(", "));
-
+    private String arrayOverlapScore(String column, String bindParamName) {
         return String.format("""
-        CASE
-            WHEN ARRAY_LENGTH(STRING_TO_ARRAY('%s', ','), 1) = 0 THEN 0.0
-            ELSE (
-                SELECT COUNT(*) FROM UNNEST(STRING_TO_ARRAY(%s, ',')) db_val
-                WHERE db_val IN (%s)
-            )::numeric / %d
-        END
-        """, valuesCsv, column, listOfValues, countA);
+        (
+            SELECT CARDINALITY(
+                ARRAY(
+                    SELECT UNNEST(p.%s)
+                    INTERSECT
+                    SELECT UNNEST(:%s)
+                )
+            )::float / GREATEST(CARDINALITY(:%s), 1)
+        )
+        """, column, bindParamName, bindParamName);
     }
 
-    private String setRegexOverlapScore(String column, String valuesCsv) {
-        if (valuesCsv == null || valuesCsv.isBlank()) {
-            return "0.0";
-        }
+    private Mono<SimilarityResult> enrichWithPositionAndGame(SimilarityResult result) {
+        return template.select(Position.class)
+                .matching(query(where("id").is(result.getPositionId())))
+                .one()
+                .doOnNext(result::setPosition)
+                .then(template.select(Game.class)
+                        .matching(query(where("id").is(result.getGameId())))
+                        .one()
+                        .doOnNext(result::setGame))
+                .thenReturn(result);
+    }
 
-        String[] squares = valuesCsv.split(",");
-        int count = squares.length;
-
-        List<String> caseStatements = Arrays.stream(squares)
-                .map(String::trim)
-                .map(sq -> String.format("CASE WHEN p.%s ~ '(^|,)%s(,|$)' THEN 1 ELSE 0 END", column, sq))
-                .toList();
-
-        return String.format("(%s)::numeric / %d", String.join(" + ", caseStatements), count);
+    private List<Integer> getPieceValue(Position position, String pieceType) {
+        return switch (pieceType) {
+            case "whiteQueen" -> position.getWhiteQueens();
+            case "whiteRook" -> position.getWhiteRooks();
+            case "whiteBishop" -> position.getWhiteBishops();
+            case "whiteKnight" -> position.getWhiteKnights();
+            case "blackQueen" -> position.getBlackQueens();
+            case "blackRook" -> position.getBlackRooks();
+            case "blackBishop" -> position.getBlackBishops();
+            case "blackKnight" -> position.getBlackKnights();
+            default -> List.of();
+        };
     }
 }

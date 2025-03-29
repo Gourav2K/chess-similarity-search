@@ -26,12 +26,44 @@ const FIND_SIMILAR_POSITIONS = gql`
 
 const App = () => {
   const [fen, setFen] = useState('');
-  const [filters, setFilters] = useState({ color: 'WHITE', selectedPieces: [] as string[] });
+  const [formError, setFormError] = useState('');
 
-  const [fetchSimilar, { loading, data, error }] = useLazyQuery(FIND_SIMILAR_POSITIONS);
+  const [filters, setFilters] = useState({
+    color: 'WHITE',
+    selectedPieces: ['PAWN'],
+    minElo: 1000,
+    maxElo: 2000,
+    limit: 12,
+  });
+
+  const [fetchSimilar, { loading, data, error: gqlError }] = useLazyQuery(FIND_SIMILAR_POSITIONS);
 
   const handleSubmit = () => {
-    if (!fen || filters.selectedPieces.length === 0) return;
+    if (!fen) {
+      setFormError('Please set up a position on the board or via FEN.');
+      return;
+    }
+
+    if (filters.selectedPieces.length === 0) {
+      setFormError('Please select at least one piece type.');
+      return;
+    }
+
+    if (
+      filters.minElo < 500 ||
+      filters.maxElo > 2500 ||
+      filters.minElo > filters.maxElo
+    ) {
+      setFormError('ELO must be between 500–2500 and minElo should be ≤ maxElo.');
+      return;
+    }
+
+    if (filters.limit < 1 || filters.limit > 30) {
+      setFormError('Result limit must be between 1 and 30.');
+      return;
+    }
+
+    setFormError('');
 
     fetchSimilar({
       variables: {
@@ -39,9 +71,12 @@ const App = () => {
         request: {
           color: filters.color,
           selectedPieces: filters.selectedPieces,
-          limit: 12,
+          minElo: filters.minElo,
+          maxElo: filters.maxElo,
+          limit: filters.limit,
         },
       },
+      fetchPolicy: 'network-only',
     });
   };
 
@@ -65,12 +100,16 @@ const App = () => {
         >
           Search Similar Positions
         </button>
+
+        {formError && (
+          <p className="text-red-600 font-medium mt-2">{formError}</p>
+        )}
       </div>
 
       <hr className="my-6" />
 
       {loading && <p>Loading results...</p>}
-      {error && <p className="text-red-500">Error: {error.message}</p>}
+      {gqlError && <p className="text-red-500 mt-2">Backend Error: {gqlError.message}</p>}
 
       <ResultsDisplay results={data?.findSimilarPositionsByFen || []} />
     </div>

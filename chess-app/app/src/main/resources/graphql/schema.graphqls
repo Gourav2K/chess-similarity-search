@@ -15,7 +15,9 @@ enum PieceType {
 input SimilarityRequestInput {
   color: Color!
   selectedPieces: [PieceType!]!
-  limit: Int
+  limit: Int,
+  minElo: Int,
+  maxElo: Int
 }
 
 type Position {

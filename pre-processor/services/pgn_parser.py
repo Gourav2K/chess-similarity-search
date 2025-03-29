@@ -14,7 +14,7 @@ def extract_positions_from_game(pgn_text, position_frequency=5):
     # Split the input into headers and move text
     parts = pgn_text.rsplit('\n', 1)
     min_move = 6
-    max_move = 100
+    max_move = 80
     
     if len(parts) < 2:
         print(f"Incomplete PGN: {pgn_text}")
@@ -52,6 +52,15 @@ def extract_positions_from_game(pgn_text, position_frequency=5):
         if game is None:
             print(f"Could not parse game from PGN:\n{full_pgn}")
             return None
+
+        MAX_PGN_LENGTH = 650
+        raw_pgn = f"{moves} {result}"
+
+        # Smart trimming: don't cut mid-move
+        if len(raw_pgn) > MAX_PGN_LENGTH:
+            trimmed_pgn = raw_pgn[:MAX_PGN_LENGTH].rsplit(' ', 1)[0]
+        else:
+            trimmed_pgn = raw_pgn
         
         # Extract game metadata
         game_data = {
@@ -65,7 +74,8 @@ def extract_positions_from_game(pgn_text, position_frequency=5):
             "eco": headers.get("ECO", ""),
             "timeControl": headers.get("TimeControl", ""),
             "opening":headers.get("Opening", ""),
-            "site":headers.get("Site", "")
+            "site":headers.get("Site", ""),
+            "pgn":trimmed_pgn
         }
         
         # Determine game type

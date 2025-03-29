@@ -21,6 +21,12 @@ public class SimilarityRequest {
     // Max number of similar results to return
     private Integer limit = 20;
 
+    // Maximum Elo for both black and white
+    private Integer maxElo = 2500;
+
+    // Minimum Elo for both black and white
+    private Integer minElo = 500;
+
     // List of pieces for searching - like whiteBishop, blackPawn, etc
     @JsonIgnore
     private Set<String> pieceTypes;

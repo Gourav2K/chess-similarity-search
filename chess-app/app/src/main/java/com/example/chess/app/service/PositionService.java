@@ -64,14 +64,14 @@ public class PositionService {
         // Initialize empty position
         position.setWhiteKing(null);
         position.setBlackKing(null);
-        position.setWhiteQueens("");
-        position.setWhiteRooks("");
-        position.setWhiteBishops("");
-        position.setWhiteKnights("");
-        position.setBlackQueens("");
-        position.setBlackRooks("");
-        position.setBlackBishops("");
-        position.setBlackKnights("");
+        position.setWhiteQueens(List.of());
+        position.setWhiteRooks(List.of());
+        position.setWhiteBishops(List.of());
+        position.setWhiteKnights(List.of());
+        position.setBlackQueens(List.of());
+        position.setBlackRooks(List.of());
+        position.setBlackBishops(List.of());
+        position.setBlackKnights(List.of());
         position.setWhitePawns(0L);
         position.setBlackPawns(0L);
 
@@ -141,14 +141,14 @@ public class PositionService {
         }
 
         // Convert lists to comma-separated strings
-        position.setWhiteQueens(listToCommaSeparated(whiteQueens));
-        position.setWhiteRooks(listToCommaSeparated(whiteRooks));
-        position.setWhiteBishops(listToCommaSeparated(whiteBishops));
-        position.setWhiteKnights(listToCommaSeparated(whiteKnights));
-        position.setBlackQueens(listToCommaSeparated(blackQueens));
-        position.setBlackRooks(listToCommaSeparated(blackRooks));
-        position.setBlackBishops(listToCommaSeparated(blackBishops));
-        position.setBlackKnights(listToCommaSeparated(blackKnights));
+        position.setWhiteQueens(whiteQueens);
+        position.setWhiteRooks(whiteRooks);
+        position.setWhiteBishops(whiteBishops);
+        position.setWhiteKnights(whiteKnights);
+        position.setBlackQueens(blackQueens);
+        position.setBlackRooks(blackRooks);
+        position.setBlackBishops(blackBishops);
+        position.setBlackKnights(blackKnights);
     }
 
     /**
@@ -166,24 +166,5 @@ public class PositionService {
         int rank = rankChar - '1';
 
         return rank * 8 + file;
-    }
-
-    /**
-     * Convert a list of integers to a comma-separated string
-     */
-    private String listToCommaSeparated(List<Integer> list) {
-        if (list.isEmpty()) {
-            return "";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            if (i > 0) {
-                sb.append(",");
-            }
-            sb.append(list.get(i));
-        }
-
-        return sb.toString();
     }
 }

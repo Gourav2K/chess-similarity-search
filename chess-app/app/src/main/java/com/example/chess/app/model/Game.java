@@ -29,6 +29,7 @@ public class Game implements Persistable<String> {
     private String timeControl;
     private String site;
     private String opening;
+    private String pgn;
 
     @Transient
     private Boolean isNew = false;
