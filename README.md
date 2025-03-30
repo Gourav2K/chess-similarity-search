@@ -17,10 +17,11 @@ This is a **live, miniature hosted version** of the application, showcasing the 
 > **Note**: The **data ingestion pipeline** (Python + Kafka + Redis) is **not active** in this live demo.  
 > The backend uses a preloaded snapshot of ~0.7M positions from Lichess PGN data.
 
-Try it here → **[chess-similarity-frontend.vercel.app](https://chess-similarity-frontend.vercel.app)**
+Try it here → ***[chess-similarity-frontend.vercel.app](https://chess-similarity-frontend.vercel.app)***
+
 ---
 
-## 📖 Project Overview
+## 📖 Project Objective
 A full-stack, containerized application (built in a way that it can be easily scaled as well) to explore and analyze chess positions based on structural similarity — built to help players discover recurring human ideas rather than rely solely on engine precision.
 
 Yes, engines exist — and yes, they can tell us the best move in any given position. But anyone who has passionately played chess knows that while the opening phase is often well-studied, the middlegame can feel like a wilderness. Players may be familiar with the first 10–15 moves of an opening, but once theory ends, they’re often left improvising.
