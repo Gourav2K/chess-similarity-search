@@ -1,11 +1,26 @@
 # ♟️ Chess Similarity Search Engine
 
-> ✨ A visual demo of the application running locally — 
+> ✨ Live Demo; Try the app here: [chess-similarity-frontend.vercel.app](https://chess-similarity-frontend.vercel.app)
 
 <div align="center">
   <img src="./resources/videos/demo_video.gif" alt="Demo Video" style="max-width: 100%; width: 800px;" />
 </div>
 
+## 🌐 Hosted Demo (Vercel + Render)
+
+This is a **live, miniature hosted version** of the application, showcasing the GraphQL-based similarity search between chess positions via a fully deployed stack:
+
+- **Frontend (React + Vite)**: hosted on [Vercel](https://vercel.com/)
+- **Backend (Spring WebFlux + GraphQL)**: deployed via [Render](https://render.com/)
+- **PostgreSQL DB**: running on a Render free-tier instance (results + query performance is limited for demo purposes ~ 7 lakh positions)
+
+> **Note**: The **data ingestion pipeline** (Python + Kafka + Redis) is **not active** in this live demo.  
+> The backend uses a preloaded snapshot of ~0.7M positions from Lichess PGN data.
+
+Try it here → **[chess-similarity-frontend.vercel.app](https://chess-similarity-frontend.vercel.app)**
+---
+
+## 📖 Project Overview
 A full-stack, containerized application (built in a way that it can be easily scaled as well) to explore and analyze chess positions based on structural similarity — built to help players discover recurring human ideas rather than rely solely on engine precision.
 
 Yes, engines exist — and yes, they can tell us the best move in any given position. But anyone who has passionately played chess knows that while the opening phase is often well-studied, the middlegame can feel like a wilderness. Players may be familiar with the first 10–15 moves of an opening, but once theory ends, they’re often left improvising.
@@ -238,6 +253,8 @@ VITE_WEBFLUX_BACKEND_URL=http://localhost:8080
 ---
 ## 🧭 What's Next?
 
+- **UI Features** - the current chessboard needs to be replaced by a board which allows custom setting of position instead of making moves to reach the desired position.
+- **Adding more suitable filters** - like opening, result, etc; so that it could help study similar structures out of specific openings, filtering by the side which won.
 - **Performance Optimizations** - Database side, application side.
 - **Clustering : KNN Embedding + Vector DB integration** to enhance the performance of fetching subset of similar positions via cosine similarity between board embeddings. A faster subset fetch could drastically improve the CTE prefiltering step.
 - **CRON Jobs** - Preprocessor logic could potentially be converted into **scheduled jobs** reading pgn files and pushing batches of games to kafka at fixed schedules
