@@ -1,4 +1,4 @@
-# ♟️ Chess Similarity Search Engine
+# ♟️ Chess Similarity Search Engine + Middlegame Insight Builder
 
 > ✨ Live Demo; Try the app here: [chess-similarity-frontend.vercel.app](https://chess-similarity-frontend.vercel.app)
 
@@ -42,21 +42,23 @@ The core idea here is to make the ***middlegame*** more studyable. Human brains 
 - 🐳 **Fully containerized using Docker and Docker Compose**
 - 🎯 **Elo-aware filtering** to show relevant human games within a target rating range
 - 🔄 **Deduplication** ensures no repeated games show up in results
+- 🧠 **LLM-powered strategy summarization** with similar positions fetched from database, users can generate a strategic breakdown using LLMs, showing key ideas and typical plans based on similar historical positions.
 
 
 ---
 
 ## 🧰 Tech Stack
 
-| Layer        | Technology                              |
-|--------------|-----------------------------------------|
-| Frontend     | React, Vite, GraphQL Client             |
-| Backend      | Java 17, Spring Boot WebFlux, GraphQL   |
-| Preprocessor | Python 3.10, kafka-python, redis        |
-| Messaging    | Kafka, Zookeeper                        |
-| Database     | PostgreSQL (R2DBC)                      |
-| Cache        | Redis                                   |
-| DevOps       | Docker, Docker Compose                  |
+| Layer        | Technology                                       |
+|--------------|--------------------------------------------------|
+| Frontend     | React, Vite, GraphQL Client                      |
+| Backend      | Java 17, Spring Boot WebFlux, GraphQL            |
+| Preprocessor | Python 3.10, kafka-python, redis                 |
+| Messaging    | Kafka, Zookeeper                                 |
+| Database     | PostgreSQL (R2DBC)                               |
+| Cache        | Redis                                            |
+| DevOps       | Docker, Docker Compose                           |
+| LLM-Service  | OpenAI, FastAPI                                  |
 
 ---
 
@@ -69,6 +71,7 @@ This project follows a modular, event-driven design pattern that makes it easy t
 - **PGN Preprocessor (Python):** Reads PGN files, extracts FEN positions, and publishes structured data in batches via Kafka. Uses Redis to track progress of how many games have been read from the PGN file so that subsequent runs can continue processing from the next game in the PGN file.
 - **Backend Application (Spring WebFlux):** Acts as the core search engine. It consumes game data from Kafka, stores positions and games in PostgreSQL, and handles incoming GraphQL queries. It includes the logicto perform structure-based similarity search using array + bitboard + integer matching logic, pre-filtering positions with PostgreSQL GIN indexes, scoring via dynamic SQL expressions, and ranking top results efficiently in-memory with deduplication based on provided criteria (like pawns, pieces, and color). 
 - **Frontend Application (React + Vite):** Provides a user-friendly interface to input FEN strings or use a chessboard to search for similar positions based on structural features. Each position output also has a direct link to the game played on Lichess which can be used for further evaluation.
+- **LLM Summarizer (Python + FastAPI)**: A dedicated microservice built using FastAPI interacting with OpenAI's API. Once similar positions are fetched, the user can trigger an LLM summary that consolidates strategic ideas from each result and produces a master plan from that position onward.
 
 ---
 
@@ -97,6 +100,7 @@ With each component running independently via Docker, the entire system is modul
 chess-similarity-project/
 ├── chess-app/              # Spring Boot WebFlux backend
 ├── chess-app-frontend/     # React + Vite frontend
+├── llm-service             # Service interacting with LLMs to generate roadmap, strategies
 ├── pre-processor/          # Python PGN preprocessor with Kafka & Redis
 ├── db-init/                # init.sql for preloaded games & schema
 ├── docker-compose.yml      # Service orchestration
@@ -259,7 +263,8 @@ VITE_WEBFLUX_BACKEND_URL=http://localhost:8080
 - **Performance Optimizations** - Database side, application side.
 - **Clustering : KNN Embedding + Vector DB integration** to enhance the performance of fetching subset of similar positions via cosine similarity between board embeddings. A faster subset fetch could drastically improve the CTE prefiltering step.
 - **CRON Jobs** - Preprocessor logic could potentially be converted into **scheduled jobs** reading pgn files and pushing batches of games to kafka at fixed schedules
-- **LLM-powered game summaries and pattern insights for each similar position** - based on the output; another service within this architecture.
+- **LLM-powered game summaries and pattern insights for each similar position** - based on the output; another service within this architecture. 
+- ✅ **LLM-powered summaries are now integrated!** Users can instantly view a strategic roadmap for the given position across all similar results, powered by OpenAI APIs for now.
 - PGNs from Lichess website are very big and compressed - a service which could automate the process of fetching, decompressing the PGN file from Lichess and become an input for the preprocessor jobs
 
 ---
