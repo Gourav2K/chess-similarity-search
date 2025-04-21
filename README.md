@@ -130,7 +130,7 @@ docker-compose run -v $(pwd)/data:/data preprocessor /data/{your_file.pgn} --max
 
 #### Option 2: Use Preloaded SQL Dump (Recommended for Demo)
 
-1. Download the .sql file I’ve shared : [Database Dump Link](https://www.dropbox.com/scl/fi/24uqbh2pow3pz22gff53z/chess_app_db.sql?rlkey=aftaj862o7oaztney9d031ijn&st=zav3530q&dl=0) - contains 250K games + ~3M positions data.
+1. Download the .sql file I’ve shared : [Database Dump Link](https://www.dropbox.com/scl/fi/24uqbh2pow3pz22gff53z/chess_app_db.sql?rlkey=aftaj862o7oaztney9d031ijn&st=0jlthfo2&dl=0) - contains 250K games + ~3M positions data.
 2. Place the file inside the db-init/ directory
 3. Proceed to the next step (docker-compose up --build)
 

@@ -69,6 +69,15 @@ services:
     env_file:
       - ./pre-processor/.env
 
+  llmservice:
+    build:
+      context: ./llm-service
+      dockerfile: ./Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./llm-service/.env
+
   frontend:
     build:
       context: ./chess-app-frontend

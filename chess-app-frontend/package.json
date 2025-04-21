@@ -8,11 +8,14 @@
   },
   "dependencies": {
     "@apollo/client": "^3.8.0",
+    "@tailwindcss/typography": "^0.5.16",
     "chess.js": "^1.1.0",
     "graphql": "^16.6.0",
     "react": "^18.2.0",
     "react-chessboard": "^2.0.5",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/chess.js": "^0.13.7",

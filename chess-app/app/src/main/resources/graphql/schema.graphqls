@@ -68,4 +68,15 @@ type SimilarityResult {
 
 type Query {
   findSimilarPositionsByFen(fen: String!, request: SimilarityRequestInput!): [SimilarityResult!]!
+  generateSummaryForPositions(positionIds: [ID!]!, side: String!): LLMSummaryResponse
+}
+
+type LLMSummaryResponse {
+  aggregatedSummary: String
+  perGameSummaries: [GameSummary]
+}
+
+type GameSummary {
+  gameId: ID!
+  summary: String!
 }

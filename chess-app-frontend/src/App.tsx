@@ -9,6 +9,8 @@ const FIND_SIMILAR_POSITIONS = gql`
     findSimilarPositionsByFen(fen: $fen, request: $request) {
       similarityScore
       moveNumber
+      positionId
+      gameId
       position {
         fen
       }
@@ -111,7 +113,11 @@ const App = () => {
       {loading && <p>Loading results...</p>}
       {gqlError && <p className="text-red-500 mt-2">Backend Error: {gqlError.message}</p>}
 
-      <ResultsDisplay results={data?.findSimilarPositionsByFen || []} />
+      <ResultsDisplay
+        results={data?.findSimilarPositionsByFen || []}
+        userSide={filters.color.toLowerCase()} // white or black
+        isFetchingPositions={loading}
+      />
     </div>
   );
 };
