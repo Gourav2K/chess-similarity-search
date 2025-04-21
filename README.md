@@ -3,7 +3,7 @@
 > ✨ Live Demo; Try the app here: [chess-similarity-frontend.vercel.app](https://chess-similarity-frontend.vercel.app)
 
 <div align="center">
-  <img src="./resources/videos/demo_video.gif" alt="Demo Video" style="max-width: 100%; width: 800px;" />
+  https://github.com/user-attachments/assets/7b232c77-f1d0-4f23-b6cb-9f3beb93034b
 </div>
 
 ## 🌐 Hosted Demo (Vercel + Render)
