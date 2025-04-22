@@ -66,7 +66,7 @@ The core idea here is to make the ***middlegame*** more studyable. Human brains 
 
 This project follows a modular, event-driven design pattern that makes it easy to scale each component independently. Here's a high-level overview of how it works:
 
-![Architecture Diagram](./resources/images/architecture_diagram.png)
+![Architecture Diagram](./resources/images/Architecture_Diagram_Updated.png)
 
 - **PGN Preprocessor (Python):** Reads PGN files, extracts FEN positions, and publishes structured data in batches via Kafka. Uses Redis to track progress of how many games have been read from the PGN file so that subsequent runs can continue processing from the next game in the PGN file.
 - **Backend Application (Spring WebFlux):** Acts as the core search engine. It consumes game data from Kafka, stores positions and games in PostgreSQL, and handles incoming GraphQL queries. It includes the logicto perform structure-based similarity search using array + bitboard + integer matching logic, pre-filtering positions with PostgreSQL GIN indexes, scoring via dynamic SQL expressions, and ranking top results efficiently in-memory with deduplication based on provided criteria (like pawns, pieces, and color). 
