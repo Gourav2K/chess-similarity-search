@@ -56,7 +56,7 @@ The core idea here is to make the ***middlegame*** more studyable. Human brains 
 | Database     | PostgreSQL (R2DBC)                               |
 | Cache        | Redis                                            |
 | DevOps       | Docker, Docker Compose                           |
-| LLM-Service  | OpenAI, FastAPI                                  |
+| LLM-Service  | OpenAI, FastAPI, Langgraph, Langchain            |
 
 ---
 
@@ -69,7 +69,21 @@ This project follows a modular, event-driven design pattern that makes it easy t
 - **PGN Preprocessor (Python):** Reads PGN files, extracts FEN positions, and publishes structured data in batches via Kafka. Uses Redis to track progress of how many games have been read from the PGN file so that subsequent runs can continue processing from the next game in the PGN file.
 - **Backend Application (Spring WebFlux):** Acts as the core search engine. It consumes game data from Kafka, stores positions and games in PostgreSQL, and handles incoming GraphQL queries. It includes the logicto perform structure-based similarity search using array + bitboard + integer matching logic, pre-filtering positions with PostgreSQL GIN indexes, scoring via dynamic SQL expressions, and ranking top results efficiently in-memory with deduplication based on provided criteria (like pawns, pieces, and color). 
 - **Frontend Application (React + Vite):** Provides a user-friendly interface to input FEN strings or use a chessboard to search for similar positions based on structural features. Each position output also has a direct link to the game played on Lichess which can be used for further evaluation.
-- **LLM Summarizer (Python + FastAPI)**: A dedicated microservice built using FastAPI interacting with OpenAI's API. Once similar positions are fetched, the user can trigger an LLM summary that consolidates strategic ideas from each result and produces a master plan from that position onward.
+- **LLM Pipeline (Python + FastAPI + Langgraph + Langchain)**: A dedicated microservice built using FastAPI interacting with a multi-agent framework which is explained in detail below.
+
+
+## LLM-Service : Agentic Pipeline
+
+![Agentic Pipeline](./resources/images/Agentic_Pipeline.png)
+
+A single prompt based API call has been broken into tiny thinking steps with LangGraph:
+1. FEN Validator: Validates FEN if passed (Langchain tool) → 
+2. Move Simulator: simulate moves and store metadata (Langchain tool) → 
+3. Structure Extractor: extracts structure details for each move simulated above  & 
+4. Position features Extractor: Extracts ideas like king-safety, presence of bishop pair, etc (Langchain tool) → 
+5. Ideas Synthesizer: synthesize ideas using all the information passed via the above (llm call) → 
+6. Verifier: verify synthesized ideas & make corrections based on highlighted incoherent ideas (llm call; but a smarter llm reviews the ideas) → 
+7. Formatter : formats the final strategy (Langchain tool). 
 
 ---
 
@@ -98,7 +112,8 @@ With each component running independently via Docker, the entire system is modul
 chess-similarity-project/
 ├── chess-app/              # Spring Boot WebFlux backend
 ├── chess-app-frontend/     # React + Vite frontend
-├── llm-service             # Service interacting with LLMs to generate roadmap, strategies
+├── llm-service-v1          # Service interacting with LLMs via OpenAI API Call to generate roadmap, strategies
+├── llm-service-v2          # Service interacting with LLMs via agentic workflow built using Langgraph
 ├── pre-processor/          # Python PGN preprocessor with Kafka & Redis
 ├── db-init/                # init.sql for preloaded games & schema
 ├── docker-compose.yml      # Service orchestration
@@ -250,6 +265,20 @@ Ensure your .env.local contains:
 ```bash
 VITE_WEBFLUX_BACKEND_URL=http://localhost:8080
 ```
+
+### 4. Start the LLM-Service
+```bash
+cd llm-service-v2
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+Ensure your .env contains:
+```bash
+OPENAI_API_KEY="xxx-xx"
+OPENAI_MODEL="xxx-xx"
+VERIFIER_OPENAI_MODEL="xxx-xx"
+```
+
 ### ✅ You're good to go!
 - Visit frontend at: [http://localhost:5173](http://localhost:5173)
 - Access GraphQL: [http://localhost:8080/graphql](http://localhost:8080/graphql)
