@@ -71,12 +71,12 @@ services:
 
   llmservice:
     build:
-      context: ./llm-service
+      context: ./llm-service-v2
       dockerfile: ./Dockerfile
     ports:
       - "8000:8000"
     env_file:
-      - ./llm-service/.env
+      - ./llm-service-v2/.env
 
   frontend:
     build:
