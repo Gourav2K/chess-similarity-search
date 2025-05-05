@@ -3,9 +3,11 @@
 > ✨ Live Demo; Try the app here: [chess-similarity-frontend.vercel.app](https://chess-similarity-frontend.vercel.app)
 
 Demo Video I - Position-similarity-search Tab
+
 https://github.com/user-attachments/assets/7b232c77-f1d0-4f23-b6cb-9f3beb93034b
 
 Demo Video II - With New Insights Tab
+
 https://github.com/user-attachments/assets/d401c061-ee0b-4155-bec5-85bbb026e1f2
 
 ## 🌐 Hosted Demo (Vercel + Render)
