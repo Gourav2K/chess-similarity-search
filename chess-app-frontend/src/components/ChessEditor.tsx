@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 
 interface ChessEditorProps {
   onFenChange: (fen: string) => void;
@@ -9,7 +13,7 @@ interface ChessEditorProps {
 const ChessEditor: React.FC<ChessEditorProps> = ({ onFenChange }) => {
   const [game] = useState(new Chess());
   const [fen, setFen] = useState(game.fen());
-  const [showFenInput, setShowFenInput] = useState(false);
+  const [useFenInput, setUseFenInput] = useState(false);
 
   useEffect(() => {
     onFenChange(fen); // Notify parent whenever FEN changes
@@ -35,42 +39,50 @@ const ChessEditor: React.FC<ChessEditorProps> = ({ onFenChange }) => {
     try {
       game.load(newFen);
     } catch {
-      // Invalid FEN — ignore but still store it
+      // Ignore invalid FEN but store it
     }
   };
 
   return (
-    <div className="mb-6">
-      <h2 className="text-xl font-semibold mb-2">Set up your position</h2>
+    <Card className="mb-6">
+      <CardContent className="space-y-4">
 
-      <label className="block mb-4">
-        <input
-          type="checkbox"
-          checked={showFenInput}
-          onChange={() => setShowFenInput((prev) => !prev)}
-          className="mr-2"
-        />
-        Use FEN input instead of board
-      </label>
+        <h2 className="text-xl font-semibold">Set up your position</h2>
 
-      {showFenInput ? (
-        <input
-          type="text"
-          value={fen}
-          onChange={handleFenInputChange}
-          className="w-full p-2 border rounded"
-        />
-      ) : (
-        <Chessboard
-          id="EditableBoard"
-          position={fen}
-          onPieceDrop={handlePieceDrop}
-          boardWidth={400}
-        />
-      )}
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="fenToggle"
+            checked={useFenInput}
+            onCheckedChange={setUseFenInput}
+          />
+          <Label htmlFor="fenToggle">Use FEN input instead of board</Label>
+        </div>
 
-      <p className="mt-2 text-sm text-gray-600">Current FEN: {fen}</p>
-    </div>
+        {useFenInput ? (
+          <div>
+            <Label htmlFor="fenInput">FEN String</Label>
+            <Input
+              id="fenInput"
+              type="text"
+              value={fen}
+              onChange={handleFenInputChange}
+              placeholder="Enter FEN manually"
+            />
+          </div>
+        ) : (
+          <div className="mx-auto w-max">
+            <Chessboard
+              id="EditableBoard"
+              position={fen}
+              onPieceDrop={handlePieceDrop}
+              boardWidth={400}
+            />
+          </div>
+        )}
+
+        <p className="text-sm text-gray-500">Current FEN: {fen}</p>
+      </CardContent>
+    </Card>
   );
 };
 

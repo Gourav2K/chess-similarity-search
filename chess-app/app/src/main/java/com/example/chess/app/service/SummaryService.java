@@ -61,7 +61,7 @@ public class SummaryService {
                 .map(result -> LLMRequest.GameSummaryRequest.builder()
                         .gameId(result.getGame().getId())
                         .fen(result.getPosition().getFen())
-                        .moves(extractRemainingPgn(result.getPosition().getMoveNumber(), result.getGame().getPgn()))  // You’ll need to make sure `moves` exists on Game or Position
+                        .moves(extractRemainingPgn(result.getPosition().getFen(), result.getGame().getPgn()))
                         .side(side)
                         .build())
                 .toList();
@@ -69,17 +69,30 @@ public class SummaryService {
         return llmClient.analyzeStrategy(requestList);
     }
 
-    private String extractRemainingPgn(int moveNumber, String fullPgn) {
-        int fullMove = (int) Math.floor(moveNumber / 2.0);
-        String movePrefix = fullMove + ".";
+    private String extractRemainingPgn(String fen, String fullPgn) {
+        String[] fenParts = fen.split(" ");
+        if (fenParts.length < 6) return "";
+
+        String sideToMove = fenParts[1];
+        int fullMoveNumber = Integer.parseInt(fenParts[5]);
+        String movePrefix = fullMoveNumber + ".";
 
         int index = fullPgn.indexOf(movePrefix);
+        if (index == -1) return "";
 
-        if (index == -1) {
-            // Couldn’t find the move number in PGN
-            return "";
+        String remaining = fullPgn.substring(index).trim();
+
+        if ("b".equals(sideToMove)) {
+            // Skip the move number and white’s move
+            // E.g., "21. Qh6 O-O-O" → remove "21. Qh6"
+            String[] tokens = remaining.split("\\s+", 3);
+            if (tokens.length >= 3) {
+                return tokens[2]; // skip "21." and White's move
+            } else {
+                return ""; // Not enough moves to process
+            }
         }
 
-        return fullPgn.substring(index).trim();
+        return remaining;
     }
 }

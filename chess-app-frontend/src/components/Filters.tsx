@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 
 type Color = 'WHITE' | 'BLACK';
 type Piece = 'PAWN' | 'KNIGHT' | 'BISHOP' | 'ROOK' | 'QUEEN' | 'KING';
@@ -18,7 +23,7 @@ const Filters: React.FC<FiltersProps> = ({ onFiltersChange }) => {
   const [selectedPieces, setSelectedPieces] = useState<Piece[]>(['PAWN']);
   const [minElo, setMinElo] = useState(1000);
   const [maxElo, setMaxElo] = useState(2000);
-  const [limit, setLimit] = useState(12);
+  const [limit, setLimit] = useState(5);
 
   useEffect(() => {
     onFiltersChange({ color, selectedPieces, minElo, maxElo, limit });
@@ -33,89 +38,89 @@ const Filters: React.FC<FiltersProps> = ({ onFiltersChange }) => {
   const pieceOptions: Piece[] = ['PAWN', 'KNIGHT', 'BISHOP', 'ROOK', 'QUEEN', 'KING'];
 
   return (
-    <div className="mb-6">
-      <h2 className="text-xl font-semibold mb-2">Filters</h2>
+    <Card className="p-4">
+      <CardContent className="space-y-6">
 
-      {/* Color Selector */}
-      <div className="mb-4">
-        <p className="font-medium mb-2">Choose color:</p>
-        <label className="mr-4">
-          <input
-            type="radio"
-            value="WHITE"
-            checked={color === 'WHITE'}
-            onChange={() => setColor('WHITE')}
-          />
-          <span className="ml-2">White</span>
-        </label>
-        <label>
-          <input
-            type="radio"
-            value="BLACK"
-            checked={color === 'BLACK'}
-            onChange={() => setColor('BLACK')}
-          />
-          <span className="ml-2">Black</span>
-        </label>
-      </div>
-
-      {/* Piece Checkboxes */}
-      <div className="mb-4">
-        <p className="font-medium mb-2">Pieces to match:</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {pieceOptions.map((piece) => (
-            <label key={piece} className="flex items-center">
-              <input
-                type="checkbox"
-                value={piece}
-                checked={selectedPieces.includes(piece)}
-                onChange={() => togglePiece(piece)}
-              />
-              <span className="ml-2 capitalize">{piece.toLowerCase()}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Elo Fields */}
-      <div className="flex gap-4 mb-4">
+        {/* Color Selection */}
         <div>
-          <label className="block text-sm font-medium mb-1">Min ELO</label>
-          <input
-            type="number"
-            min={500}
-            max={2500}
-            value={minElo}
-            onChange={(e) => setMinElo(Number(e.target.value))}
-            className="w-full p-1 border rounded"
-          />
+          <Label className="text-base">Choose color:</Label>
+          <RadioGroup
+            defaultValue={color}
+            onValueChange={(val: Color) => setColor(val)}
+            className="mt-2"
+          >
+            <div className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="WHITE" id="white" />
+                <Label htmlFor="white">White</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="BLACK" id="black" />
+                <Label htmlFor="black">Black</Label>
+              </div>
+            </div>
+          </RadioGroup>
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Max ELO</label>
-          <input
-            type="number"
-            min={500}
-            max={2500}
-            value={maxElo}
-            onChange={(e) => setMaxElo(Number(e.target.value))}
-            className="w-full p-1 border rounded"
-          />
-        </div>
-      </div>
 
-      {/* Limit Field */}
-      <div>
-        <label className="block text-sm font-medium mb-1">Number of results (1–30)</label>
-        <input
-          type="number"
-          min={1}
-          max={30}
-          value={limit}
-          onChange={(e) => setLimit(Number(e.target.value))}
-          className="w-full p-1 border rounded"
-        />
-      </div>
-    </div>
+        {/* Piece Checkboxes */}
+        <div>
+          <Label className="text-base">Pieces to match:</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
+            {pieceOptions.map((piece) => (
+              <div key={piece} className="flex items-center space-x-2">
+                <Checkbox
+                  id={piece}
+                  checked={selectedPieces.includes(piece)}
+                  onCheckedChange={() => togglePiece(piece)}
+                />
+                <Label htmlFor={piece} className="capitalize">
+                  {piece.toLowerCase()}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Elo Range */}
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <Label htmlFor="minElo">Min ELO</Label>
+            <Input
+              type="number"
+              id="minElo"
+              min={500}
+              max={2500}
+              value={minElo}
+              onChange={(e) => setMinElo(Number(e.target.value))}
+            />
+          </div>
+          <div className="flex-1">
+            <Label htmlFor="maxElo">Max ELO</Label>
+            <Input
+              type="number"
+              id="maxElo"
+              min={500}
+              max={2500}
+              value={maxElo}
+              onChange={(e) => setMaxElo(Number(e.target.value))}
+            />
+          </div>
+        </div>
+
+        {/* Result Limit */}
+        <div>
+          <Label htmlFor="limit">Number of results (1–10)</Label>
+          <Input
+            type="number"
+            id="limit"
+            min={1}
+            max={10}
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
